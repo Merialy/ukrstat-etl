@@ -1,2 +1,23 @@
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+
+# Віртуальне середовище
+venv/
+.venv/
+env/
+
+# Дані (не пушимо сирі файли Укрстату)
+data/*.xlsx
+data/*.csv
+data/*.json
+
+# IDE
+.vscode/
+.idea/
+
+# Змінні середовища (паролі, ключі)
+.env
