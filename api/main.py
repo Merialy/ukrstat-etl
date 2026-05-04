@@ -69,3 +69,26 @@ def _load_mock_data() -> list[dict]:
 
 MOCK_DATA = _load_mock_data()
 YEAR_COLUMNS = ["2020", "2021", "2022", "2023", "2024"]
+
+# ------ Хелпери ------
+def _get_region_col(record: dict) -> str:
+    for key in ("Регіон", "region", "Region"):
+        if key in record:
+            return record[key]
+    return "Невідомо"
+
+
+def _flatten_to_stats(data: list[dict], years: list[str]) -> list[dict]:
+    """Перетворює широкий формат (регіон × роки) у довгий (одна дата = один запис)."""
+    result = []
+    for row in data:
+        region = _get_region_col(row)
+        for year in years:
+            val = row.get(year)
+            result.append({
+                "region": region,
+                "year": int(year),
+                "value": float(val) if val is not None else None,
+                "unit": "грн",
+            })
+    return result
