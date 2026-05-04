@@ -24,3 +24,16 @@ ukrstat-data/
 └── README.md
 ```
 ---
+
+## Швидкий старт
+
+### 1. Встановлення залежностей
+```bash
+pip install pandas openpyxl fastapi uvicorn httpx pytest
+```
+
+### 2. Запуск ETL-скрипту (генерує демо-дані)
+```bash
+python scripts/parse_ukrstat.py
+# → data/output.json та data/output.csv
+```
