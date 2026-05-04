@@ -3,7 +3,8 @@
 FastAPI + SQLAlchemy (async)
 """
 
-from fastapi import FastAPI
+from __future__ import annotations
+from fastapi import FastAPI, HTTPException, Query
 from typing import Optional
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -92,3 +93,99 @@ def _flatten_to_stats(data: list[dict], years: list[str]) -> list[dict]:
                 "unit": "грн",
             })
     return result
+
+
+# ------ Ендпоінти ------
+@app.get("/health", response_model=HealthResponse, tags=["System"])
+def health_check():
+    """Перевірка стану API """
+    return {"status": "ok", "version": "0.1.0"}
+
+
+@app.get("/api/v1/stats", tags=["Statistics"])
+def get_stats(
+    region: Optional[str] = Query(None, description="Фільтр за назвою регіону (частковий збіг)"),
+    year: Optional[int] = Query(None, description="Фільтр за роком (2020-2024)"),
+    page: int = Query(1,    ge=1, description="Номер сторінки"),
+    per_page: int = Query(20,   ge=1, le=100, description="Записів на сторінці"),
+):
+    """
+    Повертає статистичні дані (середня ЗП по регіонах).
+
+    **Параметри:**
+    - `region` — частковий збіг у назві регіону
+    - `year` — рік спостереження
+    - `page`, `per_page` — пагінація
+    """
+    stats = _flatten_to_stats(MOCK_DATA, YEAR_COLUMNS)
+
+    # Фільтрація
+    if region:
+        stats = [s for s in stats if region.lower() in (s["region"] or "").lower()]
+    if year:
+        stats = [s for s in stats if s["year"] == year]
+
+    total = len(stats)
+    start = (page - 1) * per_page
+    end   = start + per_page
+
+    return {"total": total,
+            "page": page,
+            "per_page": per_page,
+            "data": stats[start:end],
+    }
+
+
+@app.get("/api/v1/stats/regions", tags=["Statistics"])
+def list_regions():
+    """Повертає список унікальних регіонів у датасеті."""
+    regions = sorted({_get_region_col(r) for r in MOCK_DATA})
+    return {"count": len(regions), "regions": regions}
+
+
+@app.get("/api/v1/stats/summary", tags=["Statistics"])
+def get_summary(year: int = Query(2024, description="Рік для підсумкової статистики")):
+    """ Зведена статистика за вказаний рік: 
+            мін, макс, середнє значення по всіх регіонах """
+    year_key = str(year)
+    if year_key not in YEAR_COLUMNS:
+        raise HTTPException(status_code=400, detail=f"Рік {year} відсутній у датасеті. Доступні: {YEAR_COLUMNS}")
+
+    values = [
+        float(r[year_key])
+        for r in MOCK_DATA
+        if r.get(year_key) is not None
+    ]
+
+    if not values:
+        raise HTTPException(status_code=404, detail="Немає даних за вказаний рік")
+
+    return {"year": year,
+            "count": len(values),
+            "min": min(values),
+            "max": max(values),
+            "average": round(sum(values) / len(values), 2),
+    }
+
+
+@app.get("/api/v1/stats/region/{region_name}", tags=["Statistics"])
+def get_region_timeseries(region_name: str):
+    """ Повертає часовий ряд (2020-2024) для конкретного регіону """
+    matches = [r for r in MOCK_DATA if region_name.lower() in _get_region_col(r).lower()]
+    if not matches:
+        raise HTTPException(status_code=404, detail=f"Регіон '{region_name}' не знайдено")
+
+    row = matches[0]
+    timeseries = []
+    for year in YEAR_COLUMNS:
+        val = row.get(year)
+        timeseries.append({
+            "year": int(year),
+            "value": float(val) if val is not None else None,
+        })
+
+    return {"region": _get_region_col(row),
+            "indicator": "Середня заробітна плата",
+            "unit": "грн",
+            "timeseries": timeseries,
+    }
