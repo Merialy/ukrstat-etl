@@ -23,7 +23,6 @@ from scripts.parse_ukrstat import (
 )
 
 
-
 # Fixtures
 @pytest.fixture(scope="session")
 def sample_excel_path(tmp_path_factory):

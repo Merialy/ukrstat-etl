@@ -52,3 +52,33 @@ uvicorn api.main:app --reload
 pip install pytest httpx pandas openpyxl fastapi
 pytest qa/test_data_validation.py -v
 ```
+---
+
+## API Ендпоінти
+
+| Метод | Маршрут | Опис |
+|-------|---------|------|
+| GET | `/health` | Стан сервісу |
+| GET | `/api/v1/stats` | Всі значення (пагінація, фільтр) |
+| GET | `/api/v1/stats/regions` | Список регіонів |
+| GET | `/api/v1/stats/summary?year=2024` | Мін/макс/середнє за рік |
+| GET | `/api/v1/stats/region/{name}` | Часовий ряд регіону |
+---
+
+## Схема бази даних
+
+```
+regions ──────────┐
+                  ▼
+indicators ──→ stat_values ←── import_logs
+    ▲               ▲
+indicator_categories  units
+```
+---
+
+## Наступні кроки
+
+- [ ] Підключити реальну PostgreSQL замість mock-даних
+- [ ] Додати парсер PDF-таблиць (pdfplumber)
+- [ ] Реалізувати автоматичне завантаження нових файлів з ukrstat.gov.ua
+- [ ] Інтеграція з дашбордом (Grafana або власний frontend)
