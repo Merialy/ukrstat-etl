@@ -37,3 +37,12 @@ pip install pandas openpyxl fastapi uvicorn httpx pytest
 python scripts/parse_ukrstat.py
 # → data/output.json та data/output.csv
 ```
+
+### 3. Запуск API
+```bash
+python -m venv venv
+.\venv\Scripts\activate
+pip install fastapi uvicorn sqlalchemy asyncpg
+uvicorn api.main:app --reload
+# Документація: http://localhost:8000/docs
+```
