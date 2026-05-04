@@ -46,3 +46,9 @@ pip install fastapi uvicorn sqlalchemy asyncpg
 uvicorn api.main:app --reload
 # Документація: http://localhost:8000/docs
 ```
+
+### 4. Запуск тестів
+```bash
+pip install pytest httpx pandas openpyxl fastapi
+pytest qa/test_data_validation.py -v
+```
